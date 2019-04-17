@@ -43,11 +43,35 @@ set(get(c1,'ylabel'),'string',gd.opt.clabel,...
     'fontsize',10,'fontang','it','fontweight','b')
 ylabel('\bf\it\fontsize{10}Range (m)')
 
+
+yi=(0:10:100)';
+[X,Y]=meshgrid(gd.out.pingnum,yi);
+Z=repmat(gd.out.vegcover'.*100,numel(yi),1);
+[~,bin]=histc(gd.out.vegcover.*100,yi);
+bin(bin==0)=1;
+for i=1:length(gd.out.pingnum)
+        Z(bin(i):end,i)=NaN;
+end
+
 ax(2)=subplot(4,1,3);
-plot(gd.out.pingnum,gd.out.vegcover,'k')
+pcolor(X,Y,Z)
+shading flat
+view(2)
+hold on
+colormap(ax(2),gd.sgmap)
+
+plot(gd.out.pingnum,gd.out.vegcover.*100,'k')
 set(gca,'xticklabel',[],...
     'xlim',gd.xlims)
 ylabel('\bf\it\fontsize{10}Cover (%)')
+c2=colorbar;
+set(get(c2,'ylabel'),'string','\bf\itVeg. cover (%)')
+
+set(gca,'ylim',[-5 105],...
+    'ytick',(0:25:100),...
+    'ydir','n',...
+    'layer','top',...
+    'box','on')
 
 ax(3)=subplot(4,1,4);
 plot(gd.out.pingnum,gd.out.vegheight,'k')
@@ -61,7 +85,7 @@ pos2=cellfun(@(x)([x(1) x(2) wid x(4)]),pos,'un',0);
 set(ax,{'position'},pos2)
 
 linkaxes(ax,'x')
-orient tall
+set(gcf,'paperpositionmode','au')
 
 
 

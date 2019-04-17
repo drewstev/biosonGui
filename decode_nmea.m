@@ -1,6 +1,17 @@
-function gps = decode_nmea(string)
+function gps = decode_nmea(string,varargin)
+%DECODE_NMEA - decode NMEA strings into a structure
+% 
+%   INPUT - NMEA strint
+%   OPTIONAL INPUT - base date, string eg. '2019-01-23' is used 
+%       to calculate time and date of strings that do not include the 
+%       date.
 
 data = textscan(string,'%s%[^\n]','delimiter',',');
+
+if nargin>1 
+    base_date=datenum(varargin{1});
+end
+    
 
 %define codes and associated formats
 codes={'$GPRMC';'$SDDPT';'$GPGGA';...
@@ -8,17 +19,17 @@ codes={'$GPRMC';'$SDDPT';'$GPGGA';...
 formats={['%s %*s %f %*s %f %*s',...
     '%f %f %s %*[^\n]'];...
     '%f %*[^\n]';...
-    ['%*s %f %*s %f %*s %f %f %f ',...
+    ['%s %f %*s %f %*s %f %f %f ',...
     '%f %*s %f %*s %f %*[^\n]'];...
     '%f %*s %f %*s %f %*s %f %*s';...
     '%s %f %f %f %f %*[^\n]'};
 
-if isempty(intersect(data{1},codes));
+if isempty(intersect(data{1},codes))
     gps=[];
     return
 else
     
-    for i=1:length(codes);
+    for i=1:length(codes)
         
         data2={data{2}(strcmpi(codes{i},data{1}))}';
         if ~isempty(data2{:})
@@ -57,24 +68,26 @@ else
                     gps.depth=cell2mat(cat(1,r{:}));
                     
                 case '$GPGGA'
+                    times=cellfun(@(x)(textscan(char(x{1}),...
+                        '%2c%2c%5c')),r,'un',0);
                     %lat
-                    lat=cellfun(@(x)(x{1}),r);
+                    lat=cellfun(@(x)(x{2}),r);
                     lat1=fix(lat/100);
                     lat2= (lat-(lat1*100))/60;
                     gps.latitude=lat1+lat2;
                     
                     %lon
-                    lon=cellfun(@(x)(x{2}),r);
+                    lon=cellfun(@(x)(x{3}),r);
                     lon1=fix(lon/100);
                     lon2= (lon-(lon1*100))/60;
                     gps.longitude=-(lon1+lon2);
                     
-                    gps.quality=cellfun(@(x)(x{3}),r);
-                    gps.nsats=cellfun(@(x)(x{4}),r);
-                    gps.dilution=cellfun(@(x)(x{5}),r);
-                    gps.altitude=cellfun(@(x)(x{6}),r);
-                    gps.geoid=cellfun(@(x)(x{7}),r);
-                    gps.last_fix=cellfun(@(x)(x{8}),r);
+                    gps.quality=cellfun(@(x)(x{4}),r);
+                    gps.nsats=cellfun(@(x)(x{5}),r);
+                    gps.dilution=cellfun(@(x)(x{6}),r);
+                    gps.altitude=cellfun(@(x)(x{7}),r);
+                    gps.geoid=cellfun(@(x)(x{8}),r);
+                    gps.last_fix=cellfun(@(x)(x{9}),r);
                     
                 case '$GPVTG'
                     gps.hdg_true=cellfun(@(x)(x{1}),r);

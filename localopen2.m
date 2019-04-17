@@ -70,7 +70,7 @@ switch ftype
         %calculate the desired quantity (sv,ts,log10)
         % set up default values for different quantities
         % (if unspecified in input)
-        if any(strcmpi(gd.opt.quantity,{'sv';'ts'}));
+        if any(strcmpi(gd.opt.quantity,{'sv';'ts'}))
             [ts,sv]=calcTsSv(dtx);
         end
         
@@ -106,15 +106,17 @@ switch ftype
         set(gca,'xlim',gd.xlims,...
             'ylim',gd.ylims);
         
+        
         %clean data for new file
         gd.numedits=0;
         fields={'edits';'edits2';'out';'p1';'p2';'og'};
-        for i=1:length(fields);
-            if isfield(gd,fields{i});
+        for i=1:length(fields)
+            if isfield(gd,fields{i})
                 gd=rmfield(gd,fields{i});
             end
         end
         
+        guidata(hfig,gd)
         %apply bathy options
         if isfield(gd,'bopt')
             if gd.bopt.use_tide
@@ -132,6 +134,7 @@ switch ftype
                                 undulation=...
                                     gd.geoid_t(gd.raw.gps.longitude,...
                                     gd.raw.gps.latitude);
+                                gd.raw.gps.separation=undulation;
                                 gd.geoid_interp=1;
                                 
                                 tide=(gd.raw.gps.elevation-...
@@ -150,8 +153,23 @@ switch ftype
                             
                     end
                 end
+                
                 gd.raw.gps.tide=tide;
             end
+            if gd.bopt.use_ppk_tide
+            
+                apply_ppk_bio(hfig);
+                
+                gd=guidata(hfig);
+                if gd.bopt.ppk_use_ellipsoid
+                    gd.raw.gps.tide=(gd.raw.gps.elevation-...
+                        gd.bopt.ppk_antenna_height);
+                else
+                    gd.raw.gps.tide=(gd.raw.gps.altitude-...
+                        gd.bopt.ppk_antenna_height);
+                end
+            end
+            
         end
         
         
@@ -163,8 +181,8 @@ switch ftype
         %clean data for new file
         gd.numedits=0;
         fields={'edits';'edits2';'out';'p1';'p2';'og'};
-        for i=1:length(fields);
-            if isfield(gd,fields{i});
+        for i=1:length(fields)
+            if isfield(gd,fields{i})
                 gd=rmfield(gd,fields{i});
             end
         end
@@ -217,8 +235,8 @@ switch ftype
             %clean data for new file
             gd.numedits=0;
             fields={'edits';'edits2';'out';'p1';'p2';'og'};
-            for i=1:length(fields);
-                if isfield(gd,fields{i});
+            for i=1:length(fields)
+                if isfield(gd,fields{i})
                     gd=rmfield(gd,fields{i});
                 end
             end
@@ -249,6 +267,7 @@ switch ftype
                                             undulation=...
                                                 gd.geoid_t(gd.raw.gps.longitude,...
                                                 gd.raw.gps.latitude);
+                                            gd.raw.gps.separation=undulation;
                                             gd.geoid_interp=1;
                                             
                                             tide=(gd.raw.gps.elevation-...
@@ -268,6 +287,20 @@ switch ftype
                                 end
                             end
                             gd.raw.gps.tide=tide;
+                        end
+                        
+                        if gd.bopt.use_ppk_tide
+                            
+                            apply_ppk_bio(hf);
+                            
+                            gd=guidata(hf);
+                            if gd.bopt.ppk_use_ellipsoid
+                                gd.raw.gps.tide=(gd.raw.gps.elevation-...
+                                    gd.bopt.ppk_antenna_height);
+                            else
+                                gd.raw.gps.tide=(gd.raw.gps.altitude-...
+                                    gd.bopt.ppk_antenna_height);
+                            end
                         end
                     end
                     
@@ -301,6 +334,12 @@ switch ftype
         end
 end
 
+if isfield(gd,'wmh')
+    if isvalid(gd.wmh)
+        wmline(gd.wmh,gd.raw.gps.latitude,gd.raw.gps.longitude,...
+    'featurename',gd.opt.filename);
+    end
+end
 
 if exist('matfilename','var')
     set(gd.text8,'string',...

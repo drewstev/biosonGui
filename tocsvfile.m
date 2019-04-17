@@ -18,6 +18,7 @@ end
 
 
 classifyBioson(hfig);
+gd=guidata(hfig);
 dtc=gd.out;
     
 
@@ -32,6 +33,7 @@ hdrs={'Date and Time (dd-mmm-yyyy HH:MM:SS.SSS)','%s','mtime';...
     'Longitude (deg)','%0.6f','longitude';...
     'Latitude (deg)','%0.6f','latitude';...
     'Depth (m)','%0.2f','depth';...
+    'GPS Mode (-)','%0.0f','gpsmode';...
     'GPS Tide Correction (m)','%0.2f','tide';...
     'Elevation (m)','%0.2f','zc';...
     'Veg. Cover (-)','%0.2f','vegcover';...
@@ -43,17 +45,17 @@ hdrs={'Date and Time (dd-mmm-yyyy HH:MM:SS.SSS)','%s','mtime';...
 
 
 %determine which fields if GPS tide is used or not
-if isfield(gd,'bopt')
-    if gd.bopt.use_tide
+if isfield(gd,'bopt') 
+    if (gd.bopt.use_tide || gd.bopt.use_ppk_tide)
         hfields=hdrs(:,1);
         hdata=hdrs(:,3);
         fmts=hdrs(:,2);
     end
     
 else
-    hfields=hdrs([1:4,7:8],1);
-    hdata=hdrs([1:4,7:8],3);
-    fmts=hdrs([1:4,7:8],2);
+    hfields=hdrs([1:5,8:9],1);
+    hdata=hdrs([1:5,8:9],3);
+    fmts=hdrs([1:5,8:9],2);
     
 end
 

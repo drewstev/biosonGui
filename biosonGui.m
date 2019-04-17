@@ -5,8 +5,8 @@ function biosonGui(varargin)
 % bottom and seagrass in biosonics data.
 
 
-gd.version=2.06;
-gd.modified='2015/6/9';
+gd.version=2.07;
+gd.modified='2019/2/20';
 
 
 %process input
@@ -173,7 +173,7 @@ end
 % set up default values for different quantities
 % (if unspecified in input)
 if fidx~=3
-    if any(strcmpi(opt.quantity,{'sv';'ts'}));
+    if any(strcmpi(opt.quantity,{'sv';'ts'}))
         [ts,sv]=calcTsSv(dtx);
     end
 else
@@ -437,6 +437,8 @@ gd.menu20=uimenu(gd.menu7,'label','File Info','callback',@fileInfo);
 gd.menu8=uimenu(gd.menu7,'label','GPS Viewer','callback',@showgps);
 gd.menu19=uimenu(gd.menu7,'label','Classification Viewer',...
     'callback',@viewClass,'enable','off');
+gd.wmenu=uimenu(gd.menu7,'label','Webmap Viewer',...
+    'callback',@open_webmap);
 
 gd.menu9=uimenu('label','Help');
 uimenu(gd.menu9,'label','About','callback',@dispHelp);
@@ -456,6 +458,8 @@ gd.fill_btm_maxgapsize=10;
 gd.lfd.lftype=1;
 gd.lfd.lflen=3;
 
+map=load('sgmap');
+gd.sgmap=map.sgmap;
 gd.cmap.type=1;
 gd.cmap.clims=get(gca,'clim');
 

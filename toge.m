@@ -2,6 +2,12 @@ function toge(hfig,evnt) %#ok
 
 gd=guidata(hfig);
 
+if ~isfield(gd,'out');
+    errordlg('Please run classification algorithm first.')
+    return
+end
+
+
 namer=strtok(gd.opt.filename,'.');
 [filename, pathname] = uiputfile( ...
     {'*.kml', 'KML Files'}, ...
@@ -10,6 +16,9 @@ namer=strtok(gd.opt.filename,'.');
 if filename==0
     return
 end
+
+classifyBioson(hfig);
+gd=guidata(hfig);
 
 %data type
 types={'depth';'vegcover';'vegheight'};

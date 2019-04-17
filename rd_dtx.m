@@ -161,7 +161,7 @@ while pos<numbytes
         case '0031' %heading-pitch-roll tuple
             [hpr,pos]=rd_hpr(fd,siz,pos); 
             
-            if nhpr==1;
+            if nhpr==1
                 hpr_est=ceil(numbytes/pos)*9;
                 hpr_mat=struct('ptime',zeros(1,hpr_est),...
                     'heading',zeros(1,hpr_est),...
@@ -233,7 +233,7 @@ while pos<numbytes
                 %estimate how many gps fixes are in file
                 %and intialize variables
                 if ngps==1
-                    gps_est=ceil(numbytes/pos)*5;
+                    gps_est=ceil(numbytes/pos)*10;
                     gfields=fieldnames(gpsd);
                     vars=cell(length(gfields),1);
                     [vars{:}]=deal(nan(gps_est,1));
@@ -241,6 +241,7 @@ while pos<numbytes
                 else
                     gfields=fieldnames(gps);
                 end
+                
                 
                 %make sure all the fields are included in 'gps'
                 check=setdiff(nfields,gfields);
@@ -259,9 +260,7 @@ while pos<numbytes
                 end
                 
                 ngps=ngps+1;
-                if ngps==10
-                    
-                end
+
             end
 
         case 'FFFE'
@@ -304,9 +303,19 @@ if ngps>1
     goodtimes=isfinite(gps.ptime);
     gps=structfun(@(x)(x(goodtimes)),gps,'un',0);
     
+    %first interpolate gps time (typically ZDA string sent at slower
+    %time intervals
+    if isfield(gps,'mtime')
+        if any(isnan(gps.mtime))
+            ctime=interp1(gps.ptime(isfinite(gps.mtime)),...
+                gps.mtime(isfinite(gps.mtime)),gps.ptime,'linear','extrap');
+            gps.mtime=ctime;
+        end
+    end
+    
     %interpolate gps (if available) data onto sounder
     for i = 1:env.nsdr
-        for j=1:length(gfields);
+        for j=1:length(gfields)
             gpsi.(gfields{j})=interp1(gps.ptime,gps.(gfields{j}),...
                 dtx(i).ptime,'linear','extrap');
         end
@@ -359,7 +368,7 @@ env.absorb      =        ( bits(1) + bits(2)*256 )/0.0001;
 env.sv          =        ( bits(3) + bits(4)*256 )*.0025+1400;
 env.temperature = twoscvt( bits(5) + bits(6)*256 )*.01;
 env.salinity    =        ( bits(7) + bits(8)*256 )*.01;
-env.power       = twoscvt( bits(8) + bits(10)*256 )*.1;
+env.power       = -twoscvt( bits(9) + bits(10)*256 )*.1;
 env.nsdr        = bits(11) + bits(12)*256;
 if siz<=12
         env.ftype='old';
@@ -770,9 +779,9 @@ else
                     gps.quality=cellfun(@(x)(x{3}),r);
                     gps.nsats=cellfun(@(x)(x{4}),r);
                     gps.dilution=cellfun(@(x)(x{5}),r);
-                    gps.altitude=cellfun(@(x)(x{6}),r);
-                    gps.separation=cellfun(@(x)(x{7}),r);
-                    gps.elevation=gps.altitude+gps.separation;
+                    gps.altitude=cellfun(@(x)(x{6}),r); %msl height
+                    gps.separation=cellfun(@(x)(x{7}),r); %geoid
+                    gps.elevation=gps.altitude+gps.separation; %ellipsoid ht
                     gps.last_fix=cellfun(@(x)(x{8}),r);
                     
                 case '$GPVTG'

@@ -5,34 +5,84 @@ hf = figure('units','normalized',...
     'menubar','none','name','bathy_opts',...
     'numbertitle','off','color',[0.941 0.941 0.941]);
 
+tabgp = uitabgroup(hf,'Position',[.05 .15 0.9 0.8]);
+tab1= uitab(tabgp,'Title','GPS');
+tab2 = uitab(tabgp,'Title','Geoid');
 
-gd.use_gps_tide = uicontrol(hf,'style','checkbox',...
+gd.use_gps_tide = uicontrol(tab1,'style','checkbox',...
     'units','normalized','position',[0.0949 0.822 0.448 0.0617],...
-    'string','Use GPS Tide','backgroundcolor',[0.941 0.941 0.941],...
+    'string','Use RTK Tide','backgroundcolor',[0.941 0.941 0.941],...
     'value',bopt.use_tide,...
     'callback',@use_tide);
 
-gd.astr=uicontrol(hf,'style','text','units','normalized',...
+gd.astr=uicontrol(tab1,'style','text','units','normalized',...
     'position',[0.0949 0.7 0.321 0.0724],...
     'string','Antenna Height (m)',...
     'backgroundcolor',[0.941 0.941 0.941],...
     'horizontalalign','left');
-gd.height = uicontrol(hf,'style','edit','units','normalized',...
+gd.height = uicontrol(tab1,'style','edit','units','normalized',...
     'position',[0.406 0.715 0.2 0.075],...
     'string',sprintf('%0.3f',bopt.antenna_height),...
     'backgroundcolor',[1 1 1]);
 
+gd.gstr=uicontrol(tab1,'style','text','units','normalized',...
+    'position',[0.0949 0.6 0.321 0.0724],...
+    'string','RTK Mode',...
+    'backgroundcolor',[0.941 0.941 0.941],...
+    'horizontalalign','left');
+gd.rtkmode = uicontrol(tab1,'style','edit','units','normalized',...
+    'position',[0.406 0.615 0.2 0.075],...
+    'string',sprintf('%0.3f',bopt.rtkmode),...
+    'backgroundcolor',[1 1 1]);
+
+gd.use_ppk_tide = uicontrol(tab1,'style','checkbox',...
+    'units','normalized','position',[0.0949 0.515 0.448 0.0617],...
+    'string','Use PPK Tide','backgroundcolor',[0.941 0.941 0.941],...
+    'value',bopt.use_ppk_tide,...
+    'callback',@use_ppk_tide);
 
 
-gd.use_geoid = uicontrol(hf,'style','checkbox',...
-    'units','normalized','position',[0.0949 0.622 0.448 0.0617],...
+uipanel2 = uipanel('parent',tab1,...
+    'units','normalized',...
+    'position',[0.09 0.05 0.822 0.405],...
+    'title','PPK Options');
+
+gd.select_ppk = uicontrol(uipanel2,'style','pushbutton',...
+    'units','normalized',...
+    'position',[0.0329 0.689 0.302 0.254],...
+    'string','Select PPK File',...
+    'backgroundcolor',[0.941 0.941 0.941],...
+    'enable','off','callback',@getppkfile);
+gd.ppkfilestr = uicontrol(uipanel2,'style','text',...
+    'units','normalized','position',[0.365 0.746 0.207 0.164],...
+    'string',bopt.ppkfilename,'backgroundcolor',[0.941 0.941 0.941],...
+    'enable','off');
+gd.ppk_use_ellipsoid = uicontrol(uipanel2,'style','checkbox',...
+    'units','normalized','position',[0.0299 0.436 0.602 0.194],...
+    'string','Use Ellipsoid Height','backgroundcolor',[0.941 0.941 0.941],...
+    'enable','off','value',bopt.ppk_use_ellipsoid);
+gd.ppk_astr=uicontrol(tab1,'style','text','units','normalized',...
+    'position',[0.1249 0.1 0.321 0.0724],...
+    'string','Antenna Height (m)',...
+    'backgroundcolor',[0.941 0.941 0.941],...
+    'horizontalalign','left','enable','off');
+gd.ppk_height = uicontrol(tab1,'style','edit','units','normalized',...
+    'position',[0.476 0.115 0.2 0.075],...
+    'string',sprintf('%0.3f',bopt.ppk_antenna_height),...
+    'backgroundcolor',[1 1 1],'enable','off');
+
+
+
+
+gd.use_geoid = uicontrol(tab2,'style','checkbox',...
+    'units','normalized','position',[0.0949 0.822 0.448 0.0617],...
     'string','Use Geoid Model','backgroundcolor',[0.941 0.941 0.941],...
     'value',bopt.use_geoid,...
     'callback',@use_geoid);
 
-uipanel1 = uipanel('parent',hf,...
+uipanel1 = uipanel('parent',tab2,...
     'units','normalized',...
-    'position',[0.09 0.19 0.822 0.405],...
+    'position',[0.09 0.19 0.822 0.605],...
     'title','Geoid Options');
 
 gd.use_ngs = uicontrol(uipanel1,'style','checkbox',...
@@ -77,6 +127,7 @@ if bopt.use_tide
     if bopt.use_geoid
         gtype=find(strcmpi(bopt.gtype,{'geoid_file';...
             'static';'dt4'}));
+        set(gd.use_geoid,'enable','on')
         switch gtype
             case 1
                 set(gd.select_ngs,'enable','on')
@@ -95,6 +146,7 @@ if bopt.use_tide
         end
     end
 else
+    
     set(gd.astr,'enable','off')
     set(gd.height,'enable','off','string','0.000')
     set(gd.use_geoid,'enable','off','value',0)
@@ -102,8 +154,35 @@ else
     set(gd.use_static,'enable','off','value',0)
     set(gd.geoid_static,'enable','off','string','0.000')
     set(gd.use_dt4,'enable','off','value',0);
+    set(gd.gstr,'enable','off');
+    set(gd.rtkmode,'enable','off')
 end
 
+if bopt.use_ppk_tide
+    set(gd.select_ppk,'enable','on')
+    set(gd.ppkfilestr,'enable','on')
+    set(gd.ppk_use_ellipsoid,'enable','on')
+    set(gd.ppk_astr,'enable','on')
+    set(gd.ppk_height,'enable','on')
+    set(gd.use_gps_tide,'enable','off')
+    set(gd.astr,'enable','off')
+    set(gd.height,'enable','off','string','0.000')
+    set(gd.use_geoid,'enable','off','value',0)
+    set(gd.use_ngs,'value',0,'enable','off')
+    set(gd.use_static,'enable','off','value',0)
+    set(gd.geoid_static,'enable','off','string','0.000')
+    set(gd.use_dt4,'enable','off','value',0);
+    set(gd.gstr,'enable','off');
+    set(gd.rtkmode,'enable','off')
+else
+    set(gd.select_ppk,'enable','off')
+    set(gd.ppkfilestr,'enable','off')
+    set(gd.ppk_use_ellipsoid,'enable','off')
+    set(gd.ppk_astr,'enable','off')
+    set(gd.ppk_height,'enable','off')
+end
+
+gd.bopt=bopt;
 guidata(hf,gd);
 
 
@@ -113,9 +192,11 @@ uiwait
 gd=guidata(hf);
 
 bopt.use_tide=get(gd.use_gps_tide,'value');
+bopt.use_ppk_tide=get(gd.use_ppk_tide,'value');
 if bopt.use_tide
     
     bopt.antenna_height=str2double(get(gd.height,'string'));
+    bopt.rtkmode=str2double(get(gd.rtkmode,'string'));
     bopt.use_geoid=get(gd.use_geoid,'val');
     if bopt.use_geoid
         switch gd.gtype
@@ -137,11 +218,20 @@ if bopt.use_tide
     
     bopt.static_offset=str2double(get(gd.geoid_static,'string'));
 else
-    bopt.antenna_height=0;
     bopt.use_geoid=0;
     bopt.gtype='none';
     bopt.ngs_geoid_file=[];
     bopt.static_offset=0;
+end
+
+if bopt.use_ppk_tide
+    bopt.ppkfilename=gd.bopt.ppkfilename;
+    bopt.ppkfilepath=gd.bopt.ppkfilepath;
+    bopt.ppk_use_ellipsoid=get(gd.ppk_use_ellipsoid,'value');
+    bopt.ppk_antenna_height=str2double(get(gd.ppk_height,'string'));
+else
+    bopt.ppk_antenna_height=0;
+    bopt.ppk_use_ellipsoid=0;
 end
 
 
@@ -161,12 +251,51 @@ switch val
         set(gd.use_static,'enable','off','value',0)
         set(gd.geoid_static,'enable','off','string','0.000')
         set(gd.use_dt4,'enable','off','value',0);
+        set(gd.rtkmode,'enable','off')
+        set(gd.gstr,'enable','off')
+        set(gd.use_ppk_tide,'enable','on')
     case 1
         set(gd.astr,'enable','on')
         set(gd.height,'enable','on')
         set(gd.use_geoid,'enable','on')
+        set(gd.rtkmode,'enable','on')
+        set(gd.gstr,'enable','on')
+        set(gd.use_ppk_tide,'enable','off','value',0)
+        set(gd.select_ppk,'enable','off')
+        set(gd.ppkfilestr,'enable','off','string','')
+        set(gd.ppk_use_ellipsoid,'enable','off','value',0)
+        set(gd.ppk_astr,'enable','off')
+        set(gd.ppk_height,'enable','off')
+        
 end
+%%%%----------------------------------------------------------------------
+function use_ppk_tide(hf,evnt) %#ok
+gd=guidata(hf);
 
+val=get(gd.use_ppk_tide,'value');
+switch val
+    case 0
+        
+%         set(gd.use_geoid,'enable','off','value',0)
+%         set(gd.use_ngs,'value',0,'enable','off')
+%         set(gd.ngs_fname,'string','','visible','off')
+%         set(gd.use_static,'enable','off','value',0)
+%         set(gd.geoid_static,'enable','off','string','0.000')
+%         set(gd.use_dt4,'enable','off','value',0);
+        set(gd.use_gps_tide,'enable','on')
+        set(gd.select_ppk,'enable','off')
+        set(gd.ppkfilestr,'enable','off')
+        set(gd.ppk_use_ellipsoid,'enable','off')
+        set(gd.ppk_astr,'enable','off')
+        set(gd.ppk_height,'enable','off')
+    case 1
+        set(gd.use_gps_tide,'enable','off','value',0)
+        set(gd.select_ppk,'enable','on')
+        set(gd.ppkfilestr,'enable','on')
+        set(gd.ppk_use_ellipsoid,'enable','on')
+        set(gd.ppk_astr,'enable','on')
+        set(gd.ppk_height,'enable','on')
+end
 
 
 %%%%----------------------------------------------------------------------
@@ -192,6 +321,28 @@ switch val
         set(gd.use_static,'enable','on');
         set(gd.use_dt4,'enable','on');
 end
+%%%%----------------------------------------------------------------------
+function getppkfile(hf,evnt) %#ok
+
+gd=guidata(hf);
+
+if isempty(gd.bopt.ppkfilepath)
+    [filename, pathname,fmt] = uigetfile( ...
+        '*.txt', 'Select a PPK file (*.txt)');
+else
+    [filename, pathname,fmt] = uigetfile( ...
+        '*.txt', 'Select a PPK file (*.txt)',...
+        gd.bopt.ppkfilepath);
+end
+if filename==0
+    return
+end
+
+set(gd.ppkfilestr,'string',filename)
+gd.bopt.ppkfilepath=pathname;
+gd.bopt.ppkfilename=filename;
+
+guidata(hf,gd)
 
 %%%%----------------------------------------------------------------------
 function use_ngs(hf,evnt) %#ok
@@ -297,6 +448,14 @@ switch val
         gd.gtype=find(v==1);
 end
 
+gd.bopt.use_ppk_tide=get(gd.use_ppk_tide,'value');
+if gd.bopt.use_ppk_tide
+    if isempty(gd.bopt.ppkfilename)
+        errordlg('Please select a PPK file')
+        return
+
+    end
+end
 guidata(hf,gd)
 uiresume
 

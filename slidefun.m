@@ -85,7 +85,7 @@ function R = slidefun (FUN, W, V, windowmode, varargin)
 
 % check input arguments,expected
 % <function name>, <window size>, <vector>, <windowmode>, <optional arguments ...>
-error(nargchk(3,Inf,nargin)) ;
+
 
 if nargin==3 || isempty(windowmode),
     windowmode = 'central' ;

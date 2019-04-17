@@ -7,6 +7,7 @@ opt=gd.opt;
 if isfield(gd,'out');
     class=1;
     classifyBioson(hfig);
+    gd=guidata(hfig); %make sure latest settings are applied
     dtc=gd.out; %#ok
     if isfield(gd,'edits2')
         edits=gd.edits; %#ok

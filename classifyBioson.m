@@ -79,13 +79,21 @@ btm(badflag)=NaN;
 %remove (most) max values occuring in vegetation canopy
 if gd.opt.minflen>1
     
-    funh=inline('std(detrend(x))','x');
+%     funh=@(x)(std(detrend(x)));
+%     rough=slidefun(funh,gd.opt.minflen,btm);
+%     fbtm=slidefun('min',gd.opt.minflen,btm,'forward');
+%     
+%     thres=nanmean(rough)+nanstd(rough);
+%     btm(rough>thres)=fbtm(rough>thres);
+
+    funh=@(x)(std(detrend(x)));
     rough=slidefun(funh,gd.opt.minflen,btm);
-    fbtm=slidefun('min',gd.opt.minflen,btm,'forward');
+%     fbtm=slidefun('min',gd.opt.minflen,btm,'forward');
     
     thres=nanmean(rough)+nanstd(rough);
-    btm(rough>thres)=fbtm(rough>thres);
-    
+    btm(rough>thres)=nan;
+    btm=fillgaps(btm);
+
 end
 
 
@@ -124,6 +132,29 @@ vegFlag(bz>gd.opt.vegheight & ...
     -btm>gd.opt.mindepth)=1;
 
 btm(vegFlag==0)=top(vegFlag==0);
+
+if gd.opt.minflen>1
+    
+%     funh=@(x)(std(detrend(x)));
+%     rough=slidefun(funh,gd.opt.minflen,btm);
+%     fbtm=slidefun('min',gd.opt.minflen,btm,'forward');
+%     
+%     thres=nanmean(rough)+nanstd(rough);
+%     btm(rough>thres)=fbtm(rough>thres);
+
+    funh=@(x)(std(detrend(x)));
+    rough=slidefun(funh,gd.opt.minflen,btm);
+%     fbtm=slidefun('min',gd.opt.minflen,btm,'forward');
+    
+    thres=nanmean(rough)+nanstd(rough);
+    btm(rough>thres)=nan;
+    btm=fillgaps(btm);
+
+end
+
+
+
+
 
 vegTop=zeros(length(btm),1);
 vegTop(vegFlag==1)=top(vegFlag==1);
@@ -210,14 +241,14 @@ percentcover=cell2mat(cellfun(@(x,y)(repmat(x,y,1)),num2cell(pc),...
 
 
 %do we want to plot classifcation
-if isfield(gd,'p1');
+if isfield(gd,'p1')
     set(gd.p1,'ydata',vegTop)
 else
     gd.p1=plot(gd.raw.pingnum,vegTop,'g','linewidth',2,...
         'visible','off');
 end
 
-if isfield(gd,'p2');
+if isfield(gd,'p2')
     set(gd.p2,'ydata',bareBtms)
 else
     gd.p2=plot(gd.raw.pingnum,bareBtms,'r','linewidth',2,...
@@ -246,10 +277,17 @@ gd.out.pingnum=gd.raw.pingnum(:);
 gd.out.mtime=gd.raw.mtime(:);
 gd.out.latitude=gd.raw.gps.latitude(:);
 gd.out.longitude=gd.raw.gps.longitude(:);
-gd.out.elevation=gd.raw.gps.elevation(:);
+gd.out.gpsmode=gd.raw.gps.quality(:);
+if isfield(gd.raw.gps,'elevation')
+    gd.out.elevation=gd.raw.gps.elevation(:);
+end
 gd.out.depth=bareBtms(:);
 if isfield(gd,'bopt')
     if gd.bopt.use_tide
+        gd.out.tide=gd.raw.gps.tide(:);
+        gd.out.zc=gd.out.depth+gd.out.tide(:);
+    end
+    if gd.bopt.use_ppk_tide
         gd.out.tide=gd.raw.gps.tide(:);
         gd.out.zc=gd.out.depth+gd.out.tide(:);
     end

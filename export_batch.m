@@ -14,7 +14,7 @@ end
 if isfield(gd,'out')
     classifyBioson(hfig)
 end
-
+gd=guidata(hfig);
 %mat file
 if gd.batch.out_mat
     

@@ -1,13 +1,20 @@
 function run_bathy_opts(hf,evnt) %#ok
 gd=guidata(hf);
 
-if ~isfield(gd,'bopt');
+if ~isfield(gd,'bopt')
     bopt.use_tide=0;
+    bopt.use_ppk_tide=0;
+    bopt.ppkfilename='';
+    bopt.ppkfilepath='';
+    bopt.ppk_use_ellipsoid=0;
+    bopt.ppk_antenna_height=0;
     bopt.antenna_height=0;
+    bopt.rtkmode=3;
     bopt.use_geoid=0;
     bopt.gtype='geoid_file';
     bopt.ngs_geoid_file=[];
     bopt.static_offset=0;
+    
 else
     bopt=gd.bopt;
 end
@@ -51,6 +58,7 @@ if gd.bopt.use_tide
                     gd.geoid_t(gd.raw.gps.longitude,...
                     gd.raw.gps.latitude);
                 gd.geoid_interp=1;
+                gd.raw.gps.separation=undulation;
                 
                 tide=(gd.raw.gps.elevation-...
                     gd.bopt.antenna_height)-...
@@ -68,18 +76,42 @@ if gd.bopt.use_tide
                 
         end
     end
+    tide(gd.raw.gps.quality~=gd.bopt.rtkmode)=NaN; %should only use RTK for tides
     gd.raw.gps.tide=tide;
+    guidata(hf,gd)
+end
+
+if gd.bopt.use_ppk_tide
+    
+    h = waitbar(0,'Reading PPK GPS file, Please wait...');
+    set(h,'name','Import PPK GPS data');
+    gd.ppk_data=readgnav([gd.bopt.ppkfilepath,gd.bopt.ppkfilename]);
+    waitbar(1,h,'Done!');
+    close(h)
+    
+    guidata(hf,gd)
+    apply_ppk_bio(hf);
+    
+    gd=guidata(hf);
+    if gd.bopt.ppk_use_ellipsoid
+        gd.raw.gps.tide=(gd.raw.gps.elevation-...
+                    gd.bopt.ppk_antenna_height);
+    else
+        gd.raw.gps.tide=(gd.raw.gps.altitude-...
+                    gd.bopt.ppk_antenna_height);
+    end
+    guidata(hf,gd)
 end
 
 
 
-
-
-guidata(hf,gd)
-
 if isfield(gd,'out')
+    guidata(hf,gd);
     if gd.bopt.use_tide
     classifyBioson(hf)
     end
+    if gd.bopt.use_ppk_tide
+    classifyBioson(hf)
+    end    
 end
 
