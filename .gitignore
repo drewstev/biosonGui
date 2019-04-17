@@ -41,3 +41,17 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+biosonGui/
+test_data/biosonics_test_data.zip
+test_data/bb19_0218_gd.txt
+test_data/bb1920190219_134848.dt4
+test_data/bb1920190218_151342.dt4
+test_data/bb1920190218_115232.dt4
+test_data/bb1920190218_083538.mat
+test_data/bb1920190218_083538.kml
+test_data/bb1920190218_083538.dt4
+test.csv
+rd_dtx.m.bak
+biosonGui.zip
+biosonGui.prj
+biosonGUI64.prj
